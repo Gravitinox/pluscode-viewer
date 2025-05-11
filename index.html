@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plus Code Viewer (No API Key)</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+    }
+    #input-section {
+      margin-bottom: 1rem;
+    }
+    #container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .map {
+      height: 500px;
+      flex: 1 1 400px;
+      min-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Open Location Code Viewer (No API Key)</h2>
+  <div id="input-section">
+    <input type="text" id="pluscode" placeholder="Enter Plus Code (e.g. 7FG7V2V4+G6)" size="30" />
+    <button onclick="showLocation()">Show Location</button>
+  </div>
+
+  <div id="container">
+    <div id="map-standard" class="map"></div>
+    <div id="map-satellite" class="map"></div>
+  </div>
+
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Google's Open Location Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.4/openlocationcode.min.js"></script>
+
+  <script>
+    // Initialize maps with default center so they're ready to be updated
+    const initialCoords = [0, 0];
+    const map1 = L.map('map-standard').setView(initialCoords, 2);
+    const map2 = L.map('map-satellite').setView(initialCoords, 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 20
+    }).addTo(map1);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri'
+    }).addTo(map2);
+
+    let rectangle1 = null;
+    let rectangle2 = null;
+
+    function showLocation() {
+      const code = document.getElementById("pluscode").value.trim();
+      if (!OLC.isValid(code)) {
+        alert("Invalid Plus Code!");
+        return;
+      }
+
+      const decoded = OLC.decode(code);
+      const bounds = [
+        [decoded.southLatitude, decoded.westLongitude],
+        [decoded.northLatitude, decoded.eastLongitude],
+      ];
+
+      if (rectangle1) map1.removeLayer(rectangle1);
+      if (rectangle2) map2.removeLayer(rectangle2);
+
+      rectangle1 = L.rectangle(bounds, { color: "red", weight: 2 }).addTo(map1);
+      rectangle2 = L.rectangle(bounds, { color: "red", weight: 2 }).addTo(map2);
+
+      map1.fitBounds(bounds, { padding: [20, 20] });
+      map2.fitBounds(bounds, { padding: [20, 20] });
+    }
+  </script>
+</body>
+</html>
